@@ -1,59 +1,58 @@
 Introduction
 ------------
 
-**pystatsd** is a client and server implementation of Etsy's brilliant statsd
-server, a front end/proxy for the Graphite stats collection and graphing server.
+This is the deviantART fork of the **pystatsd** server.  We prefer to use runit instead of upstart.
+
+
+Differences
+------------
+* Uses Twisted to handle the network portion
+* Provides an XMLRPC interface for monitoring
+* Publishes a lot more meta stats about internals
+* Cleanly handles 'bad' metric types w/ discard
+* Allows multiple metrics in a single message using newline character
+* Failures go to stderror
+* Has a '-d' debug option for dumping matching incoming stats to terminal
+* Can notify NSCA on failures if a notify_nsca function is provided
+* Allows incoming stats over TCP
 
 * Graphite
-    - http://graphite.wikidot.com
+    - https://github.com/graphite-project
 * Statsd
     - code: https://github.com/etsy/statsd
     - blog post: http://codeascraft.etsy.com/2011/02/15/measure-anything-measure-everything/
+* NSCA Notify
+    - https://github.com/tkuhlman/scripts/blob/master/nagios/nsca-notify
 
-**pystatsd** has [been tested on](http://travis-ci.org/sivy/py-statsd) python 2.5, 2.6, and 2.7.
-
-Status
--------------
-
-Reviewing and merging pull requests, bringing stuff up to date, now with tests!
-
-[![Build Status](https://secure.travis-ci.org/sivy/py-statsd.png?branch=master)](http://travis-ci.org/sivy/py-statsd)
-
-
+statsd.py and statsdmonitor.py have been tested on Python 2.7.
 
 Usage
 -------------
 
-See statsd_test for sample usage:
+* Get RUNIT going 
 
-    from pystatsd import Client, Server
+    aptitude install runit
 
-    srvr = Server(debug=True)
-    srvr.serve()
+See: http://alfredocambera.blogspot.com/2013/12/a-primer-on-runit-using-debian-wheezy.html
 
-    sc = Client('example.org',8125)
+* The run script should be similar to:
 
-    sc.timing('python_test.time',500)
-    sc.increment('python_test.inc_int')
-    sc.decrement('python_test.decr_int')
-    sc.gauge('python_test.gauge', 42)
-
-
-Building a Debian Package
--------------
-
-To build a debian package, run `dpkg-buildpackage -rfakeroot`
-
-Upstart init Script
--------------
-Upstart is the daemon management system for Ubuntu.
-
-A basic upstart script has been included for the pystatsd server. It's located
-under init/, and will be installed to /usr/share/doc if you build/install a
-.deb file. The upstart script should be copied to /etc/init/pystatsd.conf and
-will read configuration variables from /etc/default/pystatsd. By default the
-pystatsd daemon runs as user 'nobody' which is a good thing from a security
-perspective.
+```
+#!/bin/bash
+set -e
+exec chpst -u statsd  /usr/sbin/statsd.py \
+                                       -a \
+                                       -q \
+                                       -p <port>  \
+                                       --flush-interval 10 \
+                                       --graphite-port <graphite_port> \
+                                       --graphite-host <graphite_host>  \
+                                       --metadata-prefix statsd.my_prefix  \
+                                       --sets-prefix my_prefix.set \
+                                       --counters-prefix my_prefix \
+                                       --timers-prefix my_prefix.timers \
+                                       --gauge-prefix <my_prefix>
+```
 
 Troubleshooting
 -------------
@@ -65,3 +64,38 @@ You can see the raw values received by pystatsd by packet sniffing:
 You can see the raw values dispatched to carbon by packet sniffing:
 
     $ sudo ngrep -qd any stats tcp dst port 2003
+
+Using statsdmonitor.py (the monitor port will +10 to the stats port)
+
+    statsdmonitor.py localhost  8135
+
+```
+flush_duration: 0.410356044769
+flush_errors: 0
+last_publish.duration: 0.352137088776
+last_publish.time: 1393294923.76
+metrics.batch.count: 1454
+metrics.batch.discarded: 0
+metrics.discarded: 120
+pending_stats: 10334
+publish_error.socket: 0
+publish_error.unknown: 0
+render.counters.count: 0
+render.counters.duration: 0
+render.gauge.count: 28977
+render.gauge.duration: 0.049978017807
+render.set.count: 0
+render.set.duration: 0
+render.time: 0.0500249862671
+render.timers.count: 0
+render.timers.duration: 0
+render.total: 28990
+start_time: 1392235332.92
+```
+
+Authors
+-------------
+
+This library is under the BSD license and was forked from Steve Ivy at https://github.com/sivy/pystatsd.
+
+The deviantART fork of this library was developed by Chase Pettet, Devendra Gera, and Chris Bolt at deviantART.

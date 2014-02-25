@@ -1,2 +1,4 @@
-nose
-mock
+Python 2.7
+python-twisted
+python-argparse
+runit
