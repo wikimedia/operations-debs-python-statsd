@@ -99,3 +99,7 @@ Authors
 This library is under the BSD license and was forked from Steve Ivy at https://github.com/sivy/pystatsd.
 
 The deviantART fork of this library was developed by Chase Pettet, Devendra Gera, and Chris Bolt at deviantART.
+
+I have a presentation that included this fork about setting up Graphite.
+
+http://chasemp.github.io/2014/02/27/python-monitoring-with-diamond-statsd-graphite/
